@@ -1,0 +1,51 @@
+pip install python-telegram-bot --upgrade
+{
+  "Понедельник": [
+    {"time": "9:00", "subject": "Математика"},
+    {"time": "10:45", "subject": "Физика"}
+  ],
+  "Вторник": [
+    {"time": "8:30", "subject": "Русский язык"},
+    {"time": "10:15", "subject": "Литература"}
+  ]
+}import json
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+
+# Загружаем расписание из файла schedule.json
+def load_schedule():
+    with open('schedule.json', 'r', encoding='utf-8') as file:
+        return json.load(file)
+
+# Команда /start 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Привет! Я бот для просмотра расписания.")
+
+# Показываем расписание конкретного дня недели
+async def show_day(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    day = context.args[0].capitalize() if len(context.args) > 0 else None
+    if not day or day not in schedule.keys():
+        await update.message.reply_text(f"Введите корректный день недели.\nДоступные дни: {', '.join(schedule.keys())}")
+        return
+    
+    subjects = schedule.get(day, [])
+    response = f"{day}:\n"
+    for subject in subjects:
+        response += f"- В {subject['time']} урок: {subject['subject']}\n"
+    await update.message.reply_text(response)
+
+# Обработчик команд
+if __name__ == '__main__':
+    # Получите токен своего бота от BotFather (@BotFather)
+    TOKEN = '<7905857092:AAG3Q8yyX0gluYk3JsXDAqQSTPQdWEIuCAQ>'
+
+    application = ApplicationBuilder().token(TOKEN).build()
+
+    # Добавляем обработчики команд
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("show", show_day))  # команда вида "/show понедельник"
+
+    # Запускаем бота
+    print("Бот запущен...")
+    application.run_polling()
